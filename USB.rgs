@@ -1,0 +1,26 @@
+HKCR
+{
+	USB2Mat.USB.1 = s 'USB class'
+	{
+		CLSID = s '{b0a07713-3940-4dee-940a-d8d2ac284272}'
+	}
+	USB2Mat.USB = s 'USB class'
+	{		
+		CurVer = s 'USB2Mat.USB.1'
+	}
+	NoRemove CLSID
+	{
+		ForceRemove {b0a07713-3940-4dee-940a-d8d2ac284272} = s 'USB class'
+		{
+			ProgID = s 'USB2Mat.USB.1'
+			VersionIndependentProgID = s 'USB2Mat.USB'
+			ForceRemove Programmable
+			LocalServer32 = s '%MODULE%'
+			{
+				val ServerExecutable = s '%MODULE_RAW%'
+			}
+			TypeLib = s '{e8d74eae-27df-4feb-a0ff-604455bda9bf}'
+			Version = s '1.0'
+		}
+	}
+}

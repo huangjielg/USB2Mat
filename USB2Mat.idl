@@ -1,0 +1,67 @@
+﻿// USB2Mat.idl: USB2Mat 的 IDL 源
+//
+
+// 此文件将由 MIDL 工具处理以
+// 生成类型库(USB2Mat.tlb)和封送处理代码。
+
+import "oaidl.idl";
+import "ocidl.idl";
+
+
+
+[
+	object,
+	uuid(0e75bdde-9867-48aa-915a-c57277a22e42),
+	dual,
+	nonextensible,
+	pointer_default(unique)
+]
+interface IUSB : IDispatch
+{
+
+	[id(1)] HRESULT Start();
+	[id(2)] HRESULT Stop();
+	[id(3)] HRESULT Read([in] LONG len, [out, retval]SAFEARRAY(unsigned char)* pRetVal);
+	[id(4)] HRESULT ReadSync([in] LONG len, [out, retval]SAFEARRAY(unsigned char)* pRetVal);
+	[propget, id(5)] HRESULT saveFileName([out, retval] BSTR* pVal);
+	[propput, id(5)] HRESULT saveFileName([in] BSTR newVal);
+
+	[propget, id(6)] HRESULT Avial([out, retval] LONG* pVal);
+
+	[propget, id(7)] HRESULT readyThreshold([out, retval] LONG* pVal);
+	[propput, id(7)] HRESULT readyThreshold([in] LONG newVal);
+
+};
+[
+	uuid(e8d74eae-27df-4feb-a0ff-604455bda9bf),
+	version(1.0),
+]
+library USB2MatLib
+{
+	importlib("stdole2.tlb");
+
+	[
+		uuid(0e75bdde-9867-48aa-915a-c57277a22e43),
+	]
+	dispinterface _IUSBEvents
+	{
+		properties:
+		methods:
+			[id(1)] HRESULT DataReady();
+	
+	};
+
+
+
+	[
+		uuid(b0a07713-3940-4dee-940a-d8d2ac284272)
+	]
+	coclass USB
+	{
+		[default] interface IUSB;
+		[default,source] dispinterface _IUSBEvents;
+
+	};
+};
+
+import "shobjidl.idl";
