@@ -117,6 +117,7 @@ public:
 		m_selectedUSBDevice = new CCyUSBDevice(NULL, CYUSBDRV_GUID, true);
 		SurveyExistingDevices();
 		EnumerateEndpointForTheSelectedDevice();
+
 		m_hevtQuit.Attach(CreateEvent(NULL, TRUE, FALSE, NULL));
 		if (!m_buffer.Initialize(1024 * 1024*256))
 		{
@@ -124,6 +125,9 @@ public:
 			BOOL b;
 			OnCancel(0, 0, NULL, b);
 		}
+		if(!m_selectedUSBDevice->IsOpen())
+			SetTimer(1, 1000, NULL);
+
 		return TRUE;
 	}
 	LRESULT OnOK(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)

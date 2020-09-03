@@ -49,6 +49,9 @@
     <ClInclude Include="_IUSBEvents_CP.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="CHelpDialog.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="USB2Mat.cpp">
@@ -85,6 +88,8 @@
     <None Include="USB.rgs">
       <Filter>资源文件</Filter>
     </None>
+    <None Include="res\USBReady.m" />
+    <None Include="res\testMat2USB.m" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="USB2Mat.idl">

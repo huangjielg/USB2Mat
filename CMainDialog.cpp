@@ -7,7 +7,7 @@
 #include "CMainDialog.h"
 #include "USB.h"
 
-
+#include "chelpdialog.h"
 #ifdef _M_X64
 #pragma comment(lib,"cpp/lib/x64/cyapi.lib")
 #else
@@ -25,21 +25,33 @@
 
 LRESULT CMainDialog::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	CString s;
-	s.Format(L"%lld", m_llInBytes);
-	m_edtBytesIN.SetWindowText(s);
-	s.Format(L"%lld", m_llOutBytes);
-	m_edtBytesOut.SetWindowText(s);
-	
-	s.Format(_T("%lld"), m_llMatlabRead);
-	m_edtBytesMatlab.SetWindowText(s);
+	if (wParam == 0) {
+		CString s;
+		s.Format(L"%lld", m_llInBytes);
+		m_edtBytesIN.SetWindowText(s);
+		s.Format(L"%lld", m_llOutBytes);
+		m_edtBytesOut.SetWindowText(s);
+
+		s.Format(_T("%lld"), m_llMatlabRead);
+		m_edtBytesMatlab.SetWindowText(s);
 
 
-	s.Format(_T("%lld"), m_llDiscard);
-	m_edtBytesDiscard.SetWindowText(s);
+		s.Format(_T("%lld"), m_llDiscard);
+		m_edtBytesDiscard.SetWindowText(s);
 
-	s.Format(_T("DataReady:%lld"), m_llDataReady);
-	m_stcDataReadyNum.SetWindowText(s);
+		s.Format(_T("DataReady:%lld"), m_llDataReady);
+		m_stcDataReadyNum.SetWindowText(s);
+	}
+	else if (wParam == 1) {
+		if (!m_selectedUSBDevice->IsOpen()) {
+			SurveyExistingDevices();
+			EnumerateEndpointForTheSelectedDevice();
+			if (m_selectedUSBDevice->IsOpen())
+			{
+				KillTimer(1);
+			}
+		}
+	}
 	return LRESULT(0);
 }
 
@@ -182,50 +194,9 @@ LRESULT CMainDialog::OnBnClickedBtnUnReg(WORD /*wNotifyCode*/, WORD /*wID*/, HWN
 
 LRESULT CMainDialog::OnBnClickedBtnHelp(WORD, WORD, HWND, BOOL&)
 {
+	CHelpDialog dlg;
+	return  dlg.DoModal();
 
-	struct {
-		LPCTSTR name;
-		INT id;
-	}matlabfiles[] = { {_T("USBReady.m"),IDR_MAT_DATAREADY},
-						{_T("testMat2USB.m"),IDR_MAT_MAINTEST},
-	                 };
-	for (int i = 0; i < sizeof(matlabfiles) / sizeof(matlabfiles[0]); i++) {
-		HRSRC hRsrc = FindResource(ModuleHelper::GetResourceInstance(), MAKEINTRESOURCE(matlabfiles[i].id), TEXT("MATLAB"));
-
-
-		HGLOBAL hglob = LoadResource(ModuleHelper::GetResourceInstance(), hRsrc);
-
-		DWORD dwSize = SizeofResource(NULL, hRsrc);
-		LPVOID pBuffer = LockResource(hglob);
-
-		CAtlFile f;
-		f.Create(matlabfiles[i].name, GENERIC_WRITE, 0, CREATE_ALWAYS);
-		f.Write(pBuffer, dwSize);
-		f.Close();
-		UnlockResource(hglob);
-	}
-	
-
-
-	CString s;
-	s = _T("1: Runas Administrator ,clk reg\n"
-		"2: Launch matlab:\n"
-		"3: a=actxserver('USB2Mat.USB');\n"
-		"4: a.saveFileName='d:\\a.bin';\n"
-		"7: a.Start();\n"
-		"6.1: a.Read(100);%read atmost 100 bytes\n";
-		"6.2: a.ReadSync(100);%Wait Until 100bytes read\n";
-		"6.3: a.Avial;\n";
-		"7: a.Stop();\n"
-		"8: delete(a);\n"
-		"9: readyThreshold : send DataReady threshold"
-		" registerevent(a,{'DataReady', @myReady})\n"
- 		"function myReady(~, ~, ~, ~)\n"
-		"	1 \n"
-		"	end \n"
-		);
-	MessageBox(s);
-	return LRESULT();
 }
 
 LRESULT CMainDialog::OnBnClickedBtnStart(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
@@ -293,13 +264,22 @@ LRESULT CMainDialog::OnBnClickedBtnStart(WORD /*wNotifyCode*/, WORD /*wID*/, HWN
 unsigned  WINAPI CMainDialog::_PerformUSB2MatlabTransfer(LPVOID lParam)
 {
 	CMainDialog* pThis = (CMainDialog*)lParam;
-	return 	pThis->PerformUSB2MatlabTransfer();
+	int ret=pThis->PerformUSB2MatlabTransfer();
+
+	//if (m_bQuitApp || m_bDeviceChanging) PostMessage(WM_EXIT_APP, 0, 0);
+	ATLTRACE(_T("WorkThread Quit\n"));
+	SetEvent(pThis->m_hevtQuit);
+	return ret;
+
 }
 unsigned  CMainDialog::PerformUSB2MatlabTransfer()
 {
 	ATLTRACE(_T("WorkThread Started %d\n"),GetCurrentThreadId());
 
-	if ((m_cboEndpointIN.GetCount() == 0) || (m_cboEndpointOUT.GetCount() == 0)) return 0;
+	if ((m_cboEndpointIN.GetCount() == 0) || (m_cboEndpointOUT.GetCount() == 0))
+	{
+		return 0;
+	}
 
 	m_edtBytesIN.SetWindowText(L"0x0");
 	m_edtBytesOut.SetWindowText(L"0x0");
@@ -545,9 +525,6 @@ unsigned  CMainDialog::PerformUSB2MatlabTransfer()
 
 	fileSave.Close();
 
-	//if (m_bQuitApp || m_bDeviceChanging) PostMessage(WM_EXIT_APP, 0, 0);
-	ATLTRACE(_T("WorkThread Quit\n"));
-	SetEvent(m_hevtQuit);
 	return 1;
 }
 

@@ -219,6 +219,7 @@
   <ItemGroup>
     <ClInclude Include="CByteBuffer.h" />
     <ClInclude Include="CEnablePriv.h" />
+    <ClInclude Include="CHelpDialog.h" />
     <ClInclude Include="CMainDialog.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="pch.h" />
@@ -259,6 +260,8 @@
     <ResourceCompile Include="USB2Mat.rc" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="res\testMat2USB.m" />
+    <None Include="res\USBReady.m" />
     <None Include="USB.rgs" />
     <None Include="USB2Mat.rgs" />
   </ItemGroup>

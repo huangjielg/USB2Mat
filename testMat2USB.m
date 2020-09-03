@@ -3,5 +3,11 @@
  a.saveFilename='d:\bin';
  a.readyThreshold = 10240;
  a.Start();
+ 
+ 
+ % a.Stop
+ % delete(a)
+ 
+ 
 
  
