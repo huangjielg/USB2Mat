@@ -31,6 +31,15 @@ interface IUSB : IDispatch
 	[propget, id(7)] HRESULT readyThreshold([out, retval] LONG* pVal);
 	[propput, id(7)] HRESULT readyThreshold([in] LONG newVal);
 
+	[id(8)] HRESULT ReadDirect([in] LONG len, [out, retval]SAFEARRAY(unsigned char)* pRetVal);
+	[id(9)] HRESULT WriteDirect(SAFEARRAY(unsigned char) Val);
+
+	[id(10)] HRESULT WriteReg([in] USHORT addr,[in] USHORT Val);
+	[id(11)] HRESULT ReadReg([in] USHORT addr, [out,retval] USHORT *pVal);
+
+	[propget, id(12)] HRESULT doInit([out, retval] LONG* pVal);
+	[propput, id(12)] HRESULT doInit([in] LONG newVal);
+
 };
 [
 	uuid(e8d74eae-27df-4feb-a0ff-604455bda9bf),
@@ -48,7 +57,7 @@ library USB2MatLib
 		properties:
 		methods:
 			[id(1)] HRESULT DataReady();
-	
+			[id(2)] HRESULT USBInit();
 	};
 
 

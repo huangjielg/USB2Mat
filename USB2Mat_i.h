@@ -122,6 +122,27 @@ EXTERN_C const IID IID_IUSB;
         virtual /* [id][propput] */ HRESULT STDMETHODCALLTYPE put_readyThreshold( 
             /* [in] */ LONG newVal) = 0;
         
+        virtual /* [id] */ HRESULT STDMETHODCALLTYPE ReadDirect( 
+            /* [in] */ LONG len,
+            /* [retval][out] */ SAFEARRAY * *pRetVal) = 0;
+        
+        virtual /* [id] */ HRESULT STDMETHODCALLTYPE WriteDirect( 
+            SAFEARRAY * Val) = 0;
+        
+        virtual /* [id] */ HRESULT STDMETHODCALLTYPE WriteReg( 
+            /* [in] */ USHORT addr,
+            /* [in] */ USHORT Val) = 0;
+        
+        virtual /* [id] */ HRESULT STDMETHODCALLTYPE ReadReg( 
+            /* [in] */ USHORT addr,
+            /* [retval][out] */ USHORT *pVal) = 0;
+        
+        virtual /* [id][propget] */ HRESULT STDMETHODCALLTYPE get_doInit( 
+            /* [retval][out] */ LONG *pVal) = 0;
+        
+        virtual /* [id][propput] */ HRESULT STDMETHODCALLTYPE put_doInit( 
+            /* [in] */ LONG newVal) = 0;
+        
     };
     
     
@@ -216,6 +237,33 @@ EXTERN_C const IID IID_IUSB;
             IUSB * This,
             /* [in] */ LONG newVal);
         
+        /* [id] */ HRESULT ( STDMETHODCALLTYPE *ReadDirect )( 
+            IUSB * This,
+            /* [in] */ LONG len,
+            /* [retval][out] */ SAFEARRAY * *pRetVal);
+        
+        /* [id] */ HRESULT ( STDMETHODCALLTYPE *WriteDirect )( 
+            IUSB * This,
+            SAFEARRAY * Val);
+        
+        /* [id] */ HRESULT ( STDMETHODCALLTYPE *WriteReg )( 
+            IUSB * This,
+            /* [in] */ USHORT addr,
+            /* [in] */ USHORT Val);
+        
+        /* [id] */ HRESULT ( STDMETHODCALLTYPE *ReadReg )( 
+            IUSB * This,
+            /* [in] */ USHORT addr,
+            /* [retval][out] */ USHORT *pVal);
+        
+        /* [id][propget] */ HRESULT ( STDMETHODCALLTYPE *get_doInit )( 
+            IUSB * This,
+            /* [retval][out] */ LONG *pVal);
+        
+        /* [id][propput] */ HRESULT ( STDMETHODCALLTYPE *put_doInit )( 
+            IUSB * This,
+            /* [in] */ LONG newVal);
+        
         END_INTERFACE
     } IUSBVtbl;
 
@@ -278,6 +326,24 @@ EXTERN_C const IID IID_IUSB;
 
 #define IUSB_put_readyThreshold(This,newVal)	\
     ( (This)->lpVtbl -> put_readyThreshold(This,newVal) ) 
+
+#define IUSB_ReadDirect(This,len,pRetVal)	\
+    ( (This)->lpVtbl -> ReadDirect(This,len,pRetVal) ) 
+
+#define IUSB_WriteDirect(This,Val)	\
+    ( (This)->lpVtbl -> WriteDirect(This,Val) ) 
+
+#define IUSB_WriteReg(This,addr,Val)	\
+    ( (This)->lpVtbl -> WriteReg(This,addr,Val) ) 
+
+#define IUSB_ReadReg(This,addr,pVal)	\
+    ( (This)->lpVtbl -> ReadReg(This,addr,pVal) ) 
+
+#define IUSB_get_doInit(This,pVal)	\
+    ( (This)->lpVtbl -> get_doInit(This,pVal) ) 
+
+#define IUSB_put_doInit(This,newVal)	\
+    ( (This)->lpVtbl -> put_doInit(This,newVal) ) 
 
 #endif /* COBJMACROS */
 

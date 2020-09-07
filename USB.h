@@ -85,6 +85,24 @@ public:
 
 	STDMETHOD(put_readyThreshold)(
 		/* [in] */ LONG newVal);
+	STDMETHOD(ReadDirect)(LONG len, SAFEARRAY** pRetVal);
+	STDMETHOD(WriteDirect)(SAFEARRAY* pVal);
+
+	STDMETHOD(WriteReg)(
+		/* [in] */ USHORT addr,
+		/* [in] */ USHORT Val);
+
+	STDMETHOD(ReadReg)(
+		/* [in] */ USHORT addr,
+		/* [retval][out] */ USHORT* pVal);
+
+
+
+	STDMETHOD(get_doInit)(
+		/* [retval][out] */ LONG* pVal);
+
+	STDMETHOD(put_doInit)(
+			/* [in] */ LONG newVal);
 
 };
 

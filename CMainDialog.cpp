@@ -344,36 +344,40 @@ unsigned  CMainDialog::PerformUSB2MatlabTransfer()
 	
 	LONG len;
 	BOOL bok;
-#if 0
 
-	// 1) 停止 AD采集
-	 len = 1024;
-	UCHAR wrStopCmd[] = { 0x57,0x52,0x00,0x00,0x00,0x00,0x00,0x00 };
-	len = sizeof(wrStopCmd);
-	epBulkOut->XferData(wrStopCmd, len);
+	if (m_bDoInit) {
+		// 1) 停止 AD采集
+		len = 1024;
+		UCHAR wrStopCmd[] = { 0x57,0x52,0x00,0x00,0x00,0x00,0x00,0x00 };
+		len = sizeof(wrStopCmd);
+		epBulkOut->XferData(wrStopCmd, len);
 
 
 
-	// 2) 清空 Input Pipe
-	ULONG oldTimeout = epBulkIn->TimeOut;
-	epBulkIn->TimeOut = 500;
+		// 2) 清空 Input Pipe
+		ULONG oldTimeout = epBulkIn->TimeOut;
+		epBulkIn->TimeOut = 500;
+		int c = 0;
+		do {
+			len = totalTransferSize;
 
-	/*	do {
+			bok=epBulkIn->XferData(buffersInput[0], len);
+			c++;
+		} while (bok && c<100);
+			
+		epBulkIn->TimeOut = oldTimeout;
+
+		//3) 开始AD采集
+		UCHAR wrStartCmd[] = { 0x57,0x52,0x00,0x00,0x01,0x00,0x00,0x00 };
+		len = sizeof(wrStartCmd);
+		epBulkOut->XferData(wrStartCmd, len);
+
 		len = totalTransferSize;
+		bok = epBulkIn->XferData(buffersInput[0], len);
 
-		bok=epBulkIn->XferData(buffersInput[0], len);
-		} while (bok);
-		*/
-	epBulkIn->TimeOut = oldTimeout;
-
-	//3) 开始AD采集
-	UCHAR wrStartCmd[] = { 0x57,0x52,0x00,0x00,0x01,0x00,0x00,0x00 };
-	len = sizeof(wrStartCmd);
-	epBulkOut->XferData(wrStartCmd, len);
-#endif
+	}
 	// 4) 读取结果
-	len = totalTransferSize;
-	bok = epBulkIn->XferData(buffersInput[0], len);
+	this->SendMessage(WM_USB_INIT);
 
 	epBulkOut->TimeOut = TIMEOUT_PER_TRANSFER_MILLI_SEC;
 	LARGE_INTEGER now, freq;
@@ -489,10 +493,11 @@ unsigned  CMainDialog::PerformUSB2MatlabTransfer()
 			MessageBox(strMsg);
 			return 0;
 		}
+		speedc += readLength;
 		if (++nCount >= QueueSize) {
 			nCount = 0;
-			speedc += totalTransferSize * QueueSize;
-			if (speedc > 1024 * 1024)
+			
+			//if (speedc > 1024 * 1024)
 			{
 				LARGE_INTEGER now2;
 				::QueryPerformanceCounter(&now2);
@@ -528,6 +533,63 @@ unsigned  CMainDialog::PerformUSB2MatlabTransfer()
 	return 1;
 }
 
+INT CMainDialog::WriteDirect(PBYTE p, LONG len)
+{
+	CString strINData, strOutData;
+	TCHAR* pEnd;
+	BYTE inEpAddress = 0x0, outEpAddress = 0x0;
+	m_cboEndpointIN.GetWindowText(strINData);
+	m_cboEndpointOUT.GetWindowText(strOutData);
+
+	// Extract the endpoint addresses........
+	strINData = strINData.Right(4);
+	strOutData = strOutData.Right(4);
+
+	inEpAddress = (BYTE)wcstoul(strINData.GetBuffer(0), &pEnd, 16);
+	outEpAddress = (BYTE)wcstoul(strOutData.GetBuffer(0), &pEnd, 16);
+	CCyUSBEndPoint* epBulkOut = m_selectedUSBDevice->EndPointOf(outEpAddress);
+	CCyUSBEndPoint* epBulkIn = m_selectedUSBDevice->EndPointOf(inEpAddress);
+
+	if ((epBulkIn == NULL)
+		|| (epBulkOut == NULL))
+	{
+		return ERROR_DEVICE_NOT_CONNECTED;
+	}
+	LONG l = len;
+	if (epBulkOut->XferData((PUCHAR)p, l, NULL,true))
+	{
+		return 0;
+	}
+	return epBulkOut->LastError;
+}
+INT CMainDialog::ReadDirect(PBYTE p, LONG & len)
+{
+	CString strINData, strOutData;
+	TCHAR* pEnd;
+	BYTE inEpAddress = 0x0, outEpAddress = 0x0;
+	m_cboEndpointIN.GetWindowText(strINData);
+	m_cboEndpointOUT.GetWindowText(strOutData);
+
+	// Extract the endpoint addresses........
+	strINData = strINData.Right(4);
+	strOutData = strOutData.Right(4);
+
+	inEpAddress = (BYTE)wcstoul(strINData.GetBuffer(0), &pEnd, 16);
+	outEpAddress = (BYTE)wcstoul(strOutData.GetBuffer(0), &pEnd, 16);
+	CCyUSBEndPoint* epBulkOut = m_selectedUSBDevice->EndPointOf(outEpAddress);
+	CCyUSBEndPoint* epBulkIn = m_selectedUSBDevice->EndPointOf(inEpAddress);
+
+	if ((epBulkIn == NULL)
+		|| (epBulkOut == NULL))
+	{
+		return ERROR_DEVICE_NOT_CONNECTED;
+	}
+	if (epBulkIn->XferData((PUCHAR)p, len, NULL, true))
+	{
+		return 0;
+	}
+	return epBulkOut->LastError;
+}
 LRESULT CMainDialog::OnDataReady(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
 	if (m_pUSB) {
@@ -540,4 +602,104 @@ LRESULT CMainDialog::OnDataReady(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& 
 		}
 	}
 	return 0;
+}
+
+
+LRESULT CMainDialog::OnUSBInit(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+{
+	if (m_pUSB) {
+		m_pUSB->Fire_USBInit();
+
+	}
+	return 0;
+}
+
+
+INT CMainDialog::ReadReg(USHORT addr, USHORT* pVal)
+{
+	CString strINData, strOutData;
+	TCHAR* pEnd;
+	BYTE inEpAddress = 0x0, outEpAddress = 0x0;
+	m_cboEndpointIN.GetWindowText(strINData);
+	m_cboEndpointOUT.GetWindowText(strOutData);
+
+	// Extract the endpoint addresses........
+	strINData = strINData.Right(4);
+	strOutData = strOutData.Right(4);
+
+	inEpAddress = (BYTE)wcstoul(strINData.GetBuffer(0), &pEnd, 16);
+	outEpAddress = (BYTE)wcstoul(strOutData.GetBuffer(0), &pEnd, 16);
+	CCyUSBEndPoint* epBulkOut = m_selectedUSBDevice->EndPointOf(outEpAddress);
+	CCyUSBEndPoint* epBulkIn = m_selectedUSBDevice->EndPointOf(inEpAddress);
+	if ((epBulkIn == NULL)
+		|| (epBulkOut == NULL))
+	{
+		return ERROR_DEVICE_NOT_CONNECTED;
+	}
+
+	UCHAR rdCmd[] = { 'R','D',0x00,0x00,0x00,0x00,0x00,0x00 };
+
+	rdCmd[2] = addr & 0xFF;
+	rdCmd[3] = (addr >> 8) & 0xFF;
+
+	rdCmd[4] = 0 & 0xFF;
+	rdCmd[5] = (0 >> 8) & 0xFF;
+	LONG len = sizeof(rdCmd);
+	if (epBulkOut->XferData(rdCmd, len)) {
+		UCHAR rdResult[512];
+		len = 512;
+		if (epBulkIn->XferData(rdResult, len)) {
+
+			
+			*pVal = rdResult[5];
+			*pVal <<= 8;
+			*pVal = rdResult[4];
+
+			return S_OK;
+		}
+		else {
+			return epBulkIn->LastError;
+		}
+		
+	}
+	else
+		return epBulkOut->LastError;
+	return 0;
+}
+INT CMainDialog::WriteReg(USHORT addr, USHORT Val)
+{
+	CString strINData, strOutData;
+	TCHAR* pEnd;
+	BYTE inEpAddress = 0x0, outEpAddress = 0x0;
+	m_cboEndpointIN.GetWindowText(strINData);
+	m_cboEndpointOUT.GetWindowText(strOutData);
+
+	// Extract the endpoint addresses........
+	strINData = strINData.Right(4);
+	strOutData = strOutData.Right(4);
+
+	inEpAddress = (BYTE)wcstoul(strINData.GetBuffer(0), &pEnd, 16);
+	outEpAddress = (BYTE)wcstoul(strOutData.GetBuffer(0), &pEnd, 16);
+	CCyUSBEndPoint* epBulkOut = m_selectedUSBDevice->EndPointOf(outEpAddress);
+	CCyUSBEndPoint* epBulkIn = m_selectedUSBDevice->EndPointOf(inEpAddress);
+
+	if ((epBulkIn == NULL)
+		|| (epBulkOut == NULL))
+	{
+		return ERROR_DEVICE_NOT_CONNECTED;
+	}
+
+	UCHAR wrCmd[] = { 'W','R',0x00,0x00,0x00,0x00,0x00,0x00 };
+
+	wrCmd[2] = addr & 0xFF;
+	wrCmd[3] = (addr>>8) & 0xFF;
+
+	wrCmd[4] = Val & 0xFF;
+	wrCmd[5] = (Val >> 8) & 0xFF;
+	LONG len=sizeof(wrCmd);
+	if (epBulkOut->XferData(wrCmd, len))
+		return 0;
+	else
+		return epBulkOut->LastError;
+
 }

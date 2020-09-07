@@ -8,6 +8,7 @@ class CMainDialog : public CDialogImpl <CMainDialog>
 {
 
 	CUSB* m_pUSB;
+	
 	CComboBox m_cboDevices;
 	CComboBox m_cboEndpointIN;
 	CComboBox m_cboEndpointOUT;
@@ -34,6 +35,7 @@ class CMainDialog : public CDialogImpl <CMainDialog>
 	
 
 public:
+	BOOL m_bDoInit;
 	CString m_strFileName;
 	LONG m_nDataReadyThreshold;
 	enum { IDD = IDD_DIALOG_MAINDLG };
@@ -46,6 +48,8 @@ public:
 		MESSAGE_HANDLER(WM_DESTROY, OnDestroy)
 		MESSAGE_HANDLER(WM_TIMER, OnTimer)
 		MESSAGE_HANDLER(WM_MY_DATAREADY, OnDataReady)
+		MESSAGE_HANDLER(WM_USB_INIT, OnUSBInit)
+		
 
 		COMMAND_ID_HANDLER(IDOK, OnOK)
 		COMMAND_ID_HANDLER(IDCANCEL, OnCancel)
@@ -143,10 +147,14 @@ public:
 		}
 		return 0;
 	}
-	VOID Start() {
+	DWORD  Start() {
 		if (!m_bStarted) {
 			BOOL b;
 			OnBnClickedBtnStart(0, 0, 0, b);
+			return 0;
+		}
+		else {
+			return ERROR_INVALID_STATE;
 		}
 	}
 	VOID Stop() {
@@ -177,6 +185,7 @@ public:
 		m_llInBytes = 0;
 		m_llOutBytes = 0;
 		m_hThread = NULL;
+		m_bDoInit = FALSE;
 	}
 	BOOL EnumerateEndpointForTheSelectedDevice();
 	BOOL SurveyExistingDevices();
@@ -184,8 +193,13 @@ public:
 	LRESULT OnBnClickedBtnUnReg(WORD, WORD, HWND, BOOL&);
 	LRESULT OnBnClickedBtnHelp(WORD, WORD, HWND, BOOL&);
 	LRESULT OnDataReady(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
+	LRESULT OnUSBInit(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
+	INT ReadReg(USHORT addr, USHORT* pVal);
+	INT WriteReg(USHORT addr, USHORT Val);
 	LRESULT OnBnClickedBtnStart(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	static unsigned WINAPI _PerformUSB2MatlabTransfer(LPVOID lParam);
 	unsigned PerformUSB2MatlabTransfer();
+	INT  WriteDirect(PBYTE p, LONG len);
+	INT ReadDirect(PBYTE p, LONG & len);
 };
 

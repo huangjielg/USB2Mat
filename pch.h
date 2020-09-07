@@ -11,4 +11,5 @@
 #include "framework.h"
 #define WM_MY_QUIT (WM_USER+1)
 #define WM_MY_DATAREADY (WM_USER+2)
+#define WM_USB_INIT     (WM_USER+3)
 #endif //PCH_H
