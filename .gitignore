@@ -338,3 +338,11 @@ ASALocalRun/
 
 # BeatPulse healthcheck temp database
 healthchecksdb
+/FX2LP firmware/FW.LST
+/FX2LP firmware/slave.LST
+/FX2LP firmware/slave.M51
+/FX2LP firmware/slave.__i
+/FX2LP firmware/slave_Opt.Bak
+/FX2LP firmware/slave_Uv2.Bak
+/FX2LP firmware/DSCR.LST
+/FX2LP firmware/DSCR._ia
