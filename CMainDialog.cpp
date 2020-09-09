@@ -172,6 +172,7 @@ BOOL CMainDialog::SurveyExistingDevices()
 }
 LRESULT CMainDialog::OnBnClickedBtnReg(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
+	AtlSetPerUserRegistration(true);
 	if (AtlComModuleRegisterServer(&_AtlComModule, TRUE, NULL) != S_OK)
 	{
 		MessageBox(_T("Register Failed,Please runas Administrator"));
@@ -183,6 +184,7 @@ LRESULT CMainDialog::OnBnClickedBtnReg(WORD /*wNotifyCode*/, WORD /*wID*/, HWND 
 }
 LRESULT CMainDialog::OnBnClickedBtnUnReg(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
+	AtlSetPerUserRegistration(true);
 	if (AtlComModuleUnregisterServer(&_AtlComModule, TRUE, NULL) != S_OK) {
 		MessageBox(_T("UnRegister Failed,Please runas Administrator"));
 	}

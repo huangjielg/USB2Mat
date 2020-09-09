@@ -8,7 +8,6 @@ CByteBuffer::CByteBuffer():m_pBuffer(NULL), m_nReadPtr(0), m_nWritePtr(0),m_nSiz
 }
 
 
-
 BOOL CByteBuffer::Initialize(INT nSize)
 {
 	m_pBuffer = (PBYTE)malloc(nSize);
