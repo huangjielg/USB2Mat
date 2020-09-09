@@ -106,6 +106,7 @@ VOID CByteBuffer::Read(PBYTE p, INT& size)
 VOID CByteBuffer::WaitData()
 {
 	//WaitForSingleObject(m_evtWait, INFINITE);
+	//return;
 
 	BOOL bContinue = TRUE;
 	while (bContinue)
@@ -124,7 +125,6 @@ VOID CByteBuffer::WaitData()
 				DispatchMessage(&msg);
 			}
 			break;
-
 		}
 
 	}

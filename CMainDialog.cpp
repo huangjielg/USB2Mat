@@ -64,7 +64,7 @@ VOID CMainDialog::Read(PBYTE p, INT& len,BOOL bSync)
 		m_buffer.Read(p, l);
 		len -= l;
 		p += l;
-		if (bSync) {
+		if (len&&bSync) {
 			m_buffer.WaitData();
 		}
 		m_llMatlabRead += l;
@@ -349,6 +349,7 @@ unsigned  CMainDialog::PerformUSB2MatlabTransfer()
 		// 1) 停止 AD采集
 		len = 1024;
 		UCHAR wrStopCmd[] = { 0x57,0x52,0x00,0x00,0x00,0x00,0x00,0x00 };
+		wrStopCmd[4] |= m_bCmdOutEnable ? 0x02 : 0;
 		len = sizeof(wrStopCmd);
 		epBulkOut->XferData(wrStopCmd, len);
 
@@ -369,6 +370,7 @@ unsigned  CMainDialog::PerformUSB2MatlabTransfer()
 
 		//3) 开始AD采集
 		UCHAR wrStartCmd[] = { 0x57,0x52,0x00,0x00,0x01,0x00,0x00,0x00 };
+		wrStartCmd[4] |= m_bCmdOutEnable ? 0x02 : 0;
 		len = sizeof(wrStartCmd);
 		epBulkOut->XferData(wrStartCmd, len);
 
@@ -617,6 +619,9 @@ LRESULT CMainDialog::OnUSBInit(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bH
 
 INT CMainDialog::ReadReg(USHORT addr, USHORT* pVal)
 {
+	if (!m_bCmdOutEnable)
+		return ERROR_INVALID_STATE;
+
 	CString strINData, strOutData;
 	TCHAR* pEnd;
 	BYTE inEpAddress = 0x0, outEpAddress = 0x0;
@@ -698,7 +703,16 @@ INT CMainDialog::WriteReg(USHORT addr, USHORT Val)
 	wrCmd[5] = (Val >> 8) & 0xFF;
 	LONG len=sizeof(wrCmd);
 	if (epBulkOut->XferData(wrCmd, len))
-		return 0;
+	{
+		if (!m_bCmdOutEnable)
+			return 0;
+		UCHAR rdResult[512];
+		len = 512;
+		if (epBulkIn->XferData(rdResult, len)) {
+			return S_OK;
+		}
+		return epBulkIn->LastError;
+	}
 	else
 		return epBulkOut->LastError;
 

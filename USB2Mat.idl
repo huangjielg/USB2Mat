@@ -40,6 +40,16 @@ interface IUSB : IDispatch
 	[propget, id(12)] HRESULT doInit([out, retval] LONG* pVal);
 	[propput, id(12)] HRESULT doInit([in] LONG newVal);
 
+	[propget, id(13)] HRESULT outFormat([out, retval] BSTR* pVal);
+	[propput, id(13)] HRESULT outFormat([in] BSTR newVal);
+
+	[id(14)] HRESULT ReadDouble([in] LONG len, [out, retval]SAFEARRAY(double)* pRetVal);
+	[id(15)] HRESULT ReadDoubleSync([in] LONG len, [out, retval]SAFEARRAY(double)* pRetVal);
+
+	//[id(16)] HRESULT ReadV([in] LONG len, [out, retval]VARIANT* pRetVal);
+	[propget, id(16)] HRESULT cmdOutEnable([out, retval] LONG* pVal);
+	[propput, id(16)] HRESULT cmdOutEnable([in] LONG newVal);
+
 };
 [
 	uuid(e8d74eae-27df-4feb-a0ff-604455bda9bf),

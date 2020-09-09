@@ -28,6 +28,8 @@ class ATL_NO_VTABLE CUSB :
 
 {
 	CMainDialog *m_pDlg;
+	CString m_strOutFormat;
+	std::vector<unsigned char> m_vectReadBuffer;
 public:
 
 	DECLARE_CLASSFACTORY_SINGLETON(CUSB)
@@ -35,8 +37,6 @@ public:
 	{
 		m_pDlg = GetMainDialog();
 		m_pDlg->SetUSB(this);
-		//m_dlg.Create(NULL);
-		//m_dlg.ShowWindow(SW_SHOW);
 	}
 	~CUSB() {
 		//m_dlg.DestroyWindow();
@@ -103,6 +103,20 @@ public:
 
 	STDMETHOD(put_doInit)(
 			/* [in] */ LONG newVal);
+
+	STDMETHOD(get_outFormat)(BSTR* pVal);
+	STDMETHOD(put_outFormat)(BSTR newVal);
+
+	STDMETHOD(ReadDouble)(LONG len, SAFEARRAY** pRetVal);
+	STDMETHOD(ReadDoubleSync)(LONG len, SAFEARRAY** pRetVal);
+	//STDMETHOD(ReadV)(	/* [in] */ LONG len,	/* [retval][out] */ VARIANT* pRetVal);
+
+
+	STDMETHOD(get_cmdOutEnable)(
+		/* [retval][out] */ LONG* pVal);
+
+	STDMETHOD(put_cmdOutEnable)(
+		/* [in] */ LONG newVal);
 
 };
 

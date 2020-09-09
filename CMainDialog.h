@@ -32,9 +32,9 @@ class CMainDialog : public CDialogImpl <CMainDialog>
 	INT64 m_llDataReady;
 	LONG  m_nDataReady;
 	LONG  m_nReadyNum;
-	
 
 public:
+	BOOL m_bCmdOutEnable;
 	BOOL m_bDoInit;
 	CString m_strFileName;
 	LONG m_nDataReadyThreshold;
@@ -186,6 +186,7 @@ public:
 		m_llOutBytes = 0;
 		m_hThread = NULL;
 		m_bDoInit = FALSE;
+		m_bCmdOutEnable = FALSE;
 	}
 	BOOL EnumerateEndpointForTheSelectedDevice();
 	BOOL SurveyExistingDevices();

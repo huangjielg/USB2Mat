@@ -32,3 +32,4 @@
 #include <atlddx.h>
 #include <atlstr.h>
 #include <atlfile.h>
+#include <vector>
