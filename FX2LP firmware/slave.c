@@ -119,13 +119,13 @@ void TD_Init( void )
 
   // EP4 and EP8 are not used in this implementation...
                    
-  EP2CFG = 0xA0;                //out 512 bytes, 4x, bulk
+  EP2CFG = 0xA0;                // out 512 bytes, 4x, bulk
   SYNCDELAY;                    
-  EP6CFG = 0xE0;                // in 512 bytes, 4x, bulk
+  EP6CFG = 0xE2;                // in 512 bytes, 2x, bulk
   SYNCDELAY;              
-  EP4CFG = 0x02;                //clear valid bit
+  EP4CFG = 0x02;                // clear valid bit
   SYNCDELAY;                     
-  EP8CFG = 0x02;                //clear valid bit
+  EP8CFG = 0xE2;                // in 512 bytes, 2x, bulk
   SYNCDELAY;   
 
   SYNCDELAY;
@@ -154,6 +154,11 @@ void TD_Init( void )
   
   SYNCDELAY;                    // 
   EP6FIFOCFG = 0x0D;            // AUTOIN=1, ZEROLENIN=1, WORDWIDE=1
+
+
+  SYNCDELAY;                    // 
+  EP8FIFOCFG = 0x0D;            // AUTOIN=1, ZEROLENIN=1, WORDWIDE=1
+
 
   SYNCDELAY;
 

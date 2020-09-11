@@ -46,9 +46,9 @@ interface IUSB : IDispatch
 	[id(14)] HRESULT ReadDouble([in] LONG len, [out, retval]SAFEARRAY(double)* pRetVal);
 	[id(15)] HRESULT ReadDoubleSync([in] LONG len, [out, retval]SAFEARRAY(double)* pRetVal);
 
-	//[id(16)] HRESULT ReadV([in] LONG len, [out, retval]VARIANT* pRetVal);
-	[propget, id(16)] HRESULT cmdOutEnable([out, retval] LONG* pVal);
-	[propput, id(16)] HRESULT cmdOutEnable([in] LONG newVal);
+	
+	//[propget, id(16)] HRESULT cmdOutEnable([out, retval] LONG* pVal);
+	//[propput, id(16)] HRESULT cmdOutEnable([in] LONG newVal);
 
 };
 [

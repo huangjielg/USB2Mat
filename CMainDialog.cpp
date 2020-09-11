@@ -91,6 +91,10 @@ BOOL CMainDialog::EnumerateEndpointForTheSelectedDevice()
 	m_cboEndpointIN.ResetContent();
 	m_cboEndpointOUT.ResetContent();
 
+	m_epBulkDataIn = NULL;
+	m_epBulkRegIn = NULL;
+	m_epBulkOut = NULL;
+
 	for (int nDeviceInterfaces = 0; nDeviceInterfaces < interfaces; nDeviceInterfaces++)
 	{
 		m_selectedUSBDevice->SetAltIntfc(nDeviceInterfaces);
@@ -119,8 +123,18 @@ BOOL CMainDialog::EnumerateEndpointForTheSelectedDevice()
 
 				strTemp.Format(L"AltInt - %d and EpAddr - 0x%02X", nDeviceInterfaces, ept->Address);
 				strData += strTemp;
-				if (ept->bIn) this->m_cboEndpointIN.AddString(strData);
-				else this->m_cboEndpointOUT.AddString(strData);
+				ATLTRACE(_T("Find Ed %s\n"), strData);
+				if (ept->bIn) {
+					this->m_cboEndpointIN.AddString(strData);
+					if (m_epBulkDataIn == NULL)
+						m_epBulkDataIn = ept;
+					else
+						m_epBulkRegIn = ept;
+				}
+				else {
+					this->m_cboEndpointOUT.AddString(strData);
+					m_epBulkOut = ept;
+				}
 			}
 		}
 	}
@@ -129,6 +143,9 @@ BOOL CMainDialog::EnumerateEndpointForTheSelectedDevice()
 	if (m_cboEndpointIN.GetCount() > 0) m_cboEndpointIN.SetCurSel(0);
 
 	this->m_btnStart.EnableWindow((m_cboEndpointIN.GetCount() > 0 && m_cboEndpointIN.GetCount() > 0));
+
+
+
 
 	return TRUE;
 
@@ -283,8 +300,7 @@ unsigned  CMainDialog::PerformUSB2MatlabTransfer()
 		return 0;
 	}
 
-	m_edtBytesIN.SetWindowText(L"0x0");
-	m_edtBytesOut.SetWindowText(L"0x0");
+
 
 	m_cboEndpointIN.EnableWindow(FALSE);
 	m_cboEndpointOUT.EnableWindow(FALSE);
@@ -297,20 +313,11 @@ unsigned  CMainDialog::PerformUSB2MatlabTransfer()
 
 
 
-	CString strINData, strOutData;
-	TCHAR* pEnd;
-	BYTE inEpAddress = 0x0, outEpAddress = 0x0;
-	m_cboEndpointIN.GetWindowText(strINData);
-	m_cboEndpointOUT.GetWindowText(strOutData);
+	
+	CCyUSBEndPoint* epBulkOut = m_epBulkOut;
+	CCyUSBEndPoint* epBulkIn = m_epBulkDataIn;
 
-	// Extract the endpoint addresses........
-	strINData = strINData.Right(4);
-	strOutData = strOutData.Right(4);
 
-	inEpAddress = (BYTE)wcstoul(strINData.GetBuffer(0), &pEnd, 16);
-	outEpAddress = (BYTE)wcstoul(strOutData.GetBuffer(0), &pEnd, 16);
-	CCyUSBEndPoint* epBulkOut = m_selectedUSBDevice->EndPointOf(outEpAddress);
-	CCyUSBEndPoint* epBulkIn = m_selectedUSBDevice->EndPointOf(inEpAddress);
 
 	if (epBulkOut == NULL || epBulkIn == NULL) return 1;
 
@@ -346,18 +353,13 @@ unsigned  CMainDialog::PerformUSB2MatlabTransfer()
 	
 	LONG len;
 	BOOL bok;
-
+	//m_bDoInit = 1;
 	if (m_bDoInit) {
 		// 1) 停止 AD采集
-		len = 1024;
-		UCHAR wrStopCmd[] = { 0x57,0x52,0x00,0x00,0x00,0x00,0x00,0x00 };
-		wrStopCmd[4] |= m_bCmdOutEnable ? 0x02 : 0;
-		len = sizeof(wrStopCmd);
-		epBulkOut->XferData(wrStopCmd, len);
-
-
+	//	WriteReg(0, 0);
 
 		// 2) 清空 Input Pipe
+#if 0
 		ULONG oldTimeout = epBulkIn->TimeOut;
 		epBulkIn->TimeOut = 500;
 		int c = 0;
@@ -369,16 +371,9 @@ unsigned  CMainDialog::PerformUSB2MatlabTransfer()
 		} while (bok && c<100);
 			
 		epBulkIn->TimeOut = oldTimeout;
+#endif
 
-		//3) 开始AD采集
-		UCHAR wrStartCmd[] = { 0x57,0x52,0x00,0x00,0x01,0x00,0x00,0x00 };
-		wrStartCmd[4] |= m_bCmdOutEnable ? 0x02 : 0;
-		len = sizeof(wrStartCmd);
-		epBulkOut->XferData(wrStartCmd, len);
-
-		len = totalTransferSize;
-		bok = epBulkIn->XferData(buffersInput[0], len);
-
+		WriteReg(0, 1);
 	}
 	// 4) 读取结果
 	this->SendMessage(WM_USB_INIT);
@@ -444,37 +439,41 @@ unsigned  CMainDialog::PerformUSB2MatlabTransfer()
 
 
 		//m_serverMatlab.PushData(d, sizeof(double) * readLength / 4);
-		INT discard=0;
-		m_buffer.Write(buffersInput[nCount], readLength,discard);
-
-		if (bDoSave) {
-			fileSave.Write(buffersInput[nCount], readLength);
-		}
-		if (m_pUSB) {
-
-			
-			LONG t;
-			m_nReadyNum += readLength;
-			if (m_nReadyNum >=m_nDataReadyThreshold) {
-				if (t = InterlockedExchangeAdd(&m_nDataReady, 1))
-				{
-					m_nReadyNum -= m_nDataReadyThreshold;
-					ATLTRACE(_T("dataReadNum =%d\n"), m_nDataReady);
-					PostMessage(WM_MY_DATAREADY, 0, 0);
-				}
+		if (readLength) {
+			INT discard = 0;
+			if (readLength % 8) {
+				ATLTRACE(_T("Abnormal ReadLength=%d\n"), readLength);
+				readLength = readLength & (~(7UL));
 			}
-			
+			m_buffer.Write(buffersInput[nCount], readLength, discard);
+
+			if (bDoSave) {
+				fileSave.Write(buffersInput[nCount], readLength);
+			}
+			if (m_pUSB) {
+
+
+				LONG t;
+				m_nReadyNum += readLength;
+				if (m_nReadyNum >= m_nDataReadyThreshold) {
+					if (t = InterlockedExchangeAdd(&m_nDataReady, 1))
+					{
+						m_nReadyNum -= m_nDataReadyThreshold;
+						ATLTRACE(_T("dataReadNum =%d\n"), m_nDataReady);
+						PostMessage(WM_MY_DATAREADY, 0, 0);
+					}
+				}
+
+			}
+			m_llDiscard += discard;
+			m_llInBytes += readLength;
+			if (discard != 0)
+			{
+				CString s;
+				s.Format(_T("%lld"), m_llDiscard);
+				m_edtBytesDiscard.SetWindowText(s);
+			}
 		}
-		m_llDiscard += discard;
-		m_llInBytes += readLength;
-		
-		if(discard!=0)
-		{
-			CString s;
-			s.Format(_T("%lld"), m_llDiscard);
-			m_edtBytesDiscard.SetWindowText(s);
-		}
-	
 
 		
 
@@ -621,25 +620,8 @@ LRESULT CMainDialog::OnUSBInit(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bH
 
 INT CMainDialog::ReadReg(USHORT addr, USHORT* pVal)
 {
-	if (!m_bCmdOutEnable)
-		return ERROR_INVALID_STATE;
-
-	CString strINData, strOutData;
-	TCHAR* pEnd;
-	BYTE inEpAddress = 0x0, outEpAddress = 0x0;
-	m_cboEndpointIN.GetWindowText(strINData);
-	m_cboEndpointOUT.GetWindowText(strOutData);
-
-	// Extract the endpoint addresses........
-	strINData = strINData.Right(4);
-	strOutData = strOutData.Right(4);
-
-	inEpAddress = (BYTE)wcstoul(strINData.GetBuffer(0), &pEnd, 16);
-	outEpAddress = (BYTE)wcstoul(strOutData.GetBuffer(0), &pEnd, 16);
-	CCyUSBEndPoint* epBulkOut = m_selectedUSBDevice->EndPointOf(outEpAddress);
-	CCyUSBEndPoint* epBulkIn = m_selectedUSBDevice->EndPointOf(inEpAddress);
-	if ((epBulkIn == NULL)
-		|| (epBulkOut == NULL))
+	if ((m_epBulkOut == NULL)
+		|| (m_epBulkRegIn == NULL))
 	{
 		return ERROR_DEVICE_NOT_CONNECTED;
 	}
@@ -652,10 +634,10 @@ INT CMainDialog::ReadReg(USHORT addr, USHORT* pVal)
 	rdCmd[4] = 0 & 0xFF;
 	rdCmd[5] = (0 >> 8) & 0xFF;
 	LONG len = sizeof(rdCmd);
-	if (epBulkOut->XferData(rdCmd, len)) {
+	if (m_epBulkOut->XferData(rdCmd, len)) {
 		UCHAR rdResult[512];
 		len = 512;
-		if (epBulkIn->XferData(rdResult, len)) {
+		if (m_epBulkRegIn->XferData(rdResult, len)) {
 
 			
 			*pVal = rdResult[5];
@@ -665,33 +647,18 @@ INT CMainDialog::ReadReg(USHORT addr, USHORT* pVal)
 			return S_OK;
 		}
 		else {
-			return epBulkIn->LastError;
+			return m_epBulkRegIn->LastError;
 		}
 		
 	}
 	else
-		return epBulkOut->LastError;
+		return m_epBulkOut->LastError;
 	return 0;
 }
 INT CMainDialog::WriteReg(USHORT addr, USHORT Val)
 {
-	CString strINData, strOutData;
-	TCHAR* pEnd;
-	BYTE inEpAddress = 0x0, outEpAddress = 0x0;
-	m_cboEndpointIN.GetWindowText(strINData);
-	m_cboEndpointOUT.GetWindowText(strOutData);
-
-	// Extract the endpoint addresses........
-	strINData = strINData.Right(4);
-	strOutData = strOutData.Right(4);
-
-	inEpAddress = (BYTE)wcstoul(strINData.GetBuffer(0), &pEnd, 16);
-	outEpAddress = (BYTE)wcstoul(strOutData.GetBuffer(0), &pEnd, 16);
-	CCyUSBEndPoint* epBulkOut = m_selectedUSBDevice->EndPointOf(outEpAddress);
-	CCyUSBEndPoint* epBulkIn = m_selectedUSBDevice->EndPointOf(inEpAddress);
-
-	if ((epBulkIn == NULL)
-		|| (epBulkOut == NULL))
+	if ((m_epBulkOut == NULL)
+		|| (m_epBulkRegIn == NULL))
 	{
 		return ERROR_DEVICE_NOT_CONNECTED;
 	}
@@ -703,19 +670,32 @@ INT CMainDialog::WriteReg(USHORT addr, USHORT Val)
 
 	wrCmd[4] = Val & 0xFF;
 	wrCmd[5] = (Val >> 8) & 0xFF;
+
+	wrCmd[6] = m_nRegSeq & 0xFF;
+	wrCmd[7] = (m_nRegSeq >> 8) & 0xFF;
+
+
 	LONG len=sizeof(wrCmd);
-	if (epBulkOut->XferData(wrCmd, len))
+	if (m_epBulkOut->XferData(wrCmd, len))
 	{
-		if (!m_bCmdOutEnable)
-			return 0;
+
 		UCHAR rdResult[512];
 		len = 512;
-		if (epBulkIn->XferData(rdResult, len)) {
+		if (m_epBulkRegIn->XferData(rdResult, len)) {
+			if (
+				(rdResult[6] != (m_nRegSeq & 0xFF))
+				|| (rdResult[7] != ((m_nRegSeq >> 8) & 0xFF))
+				)
+				ATLTRACE(_T("Reg Seq Error %08x ,%02x%02x"), m_nRegSeq, rdResult[7], rdResult[6]);
+			m_nRegSeq++;
 			return S_OK;
 		}
-		return epBulkIn->LastError;
+		m_nRegSeq++;
+		return m_epBulkRegIn->LastError;
 	}
-	else
-		return epBulkOut->LastError;
+	else {
+		m_nRegSeq++;
+		return m_epBulkOut->LastError;
+	}
 
 }

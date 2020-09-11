@@ -8,7 +8,7 @@ class CMainDialog : public CDialogImpl <CMainDialog>
 {
 
 	CUSB* m_pUSB;
-	
+	USHORT    m_nRegSeq;
 	CComboBox m_cboDevices;
 	CComboBox m_cboEndpointIN;
 	CComboBox m_cboEndpointOUT;
@@ -32,9 +32,11 @@ class CMainDialog : public CDialogImpl <CMainDialog>
 	INT64 m_llDataReady;
 	LONG  m_nDataReady;
 	LONG  m_nReadyNum;
-
+	CCyUSBEndPoint* m_epBulkDataIn;
+	CCyUSBEndPoint* m_epBulkRegIn;
+	CCyUSBEndPoint* m_epBulkOut;
 public:
-	BOOL m_bCmdOutEnable;
+	
 	BOOL m_bDoInit;
 	CString m_strFileName;
 	LONG m_nDataReadyThreshold;
@@ -141,10 +143,10 @@ public:
 	LRESULT OnCancel(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 	{
 		LONG lLocks = _pAtlModule->GetLockCount();
-		if (lLocks == 0) {
+		//if (lLocks == 0) {
 		//	DestroyWindow();
 			PostThreadMessage(GetCurrentThreadId(), WM_MY_QUIT, 0, 0);
-		}
+		//}
 		return 0;
 	}
 	DWORD  Start() {
@@ -186,7 +188,11 @@ public:
 		m_llOutBytes = 0;
 		m_hThread = NULL;
 		m_bDoInit = FALSE;
-		m_bCmdOutEnable = FALSE;
+		
+
+		m_epBulkDataIn = NULL;
+		m_epBulkRegIn = NULL;
+		m_epBulkOut = NULL;
 	}
 	BOOL EnumerateEndpointForTheSelectedDevice();
 	BOOL SurveyExistingDevices();

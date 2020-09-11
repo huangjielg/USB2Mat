@@ -112,11 +112,11 @@ public:
 	//STDMETHOD(ReadV)(	/* [in] */ LONG len,	/* [retval][out] */ VARIANT* pRetVal);
 
 
-	STDMETHOD(get_cmdOutEnable)(
-		/* [retval][out] */ LONG* pVal);
+//	STDMETHOD(get_cmdOutEnable)(
+//		/* [retval][out] */ LONG* pVal);
 
-	STDMETHOD(put_cmdOutEnable)(
-		/* [in] */ LONG newVal);
+//	STDMETHOD(put_cmdOutEnable)(
+//		/* [in] */ LONG newVal);
 
 };
 

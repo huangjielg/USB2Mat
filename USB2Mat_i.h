@@ -157,12 +157,6 @@ EXTERN_C const IID IID_IUSB;
             /* [in] */ LONG len,
             /* [retval][out] */ SAFEARRAY * *pRetVal) = 0;
         
-        virtual /* [id][propget] */ HRESULT STDMETHODCALLTYPE get_cmdOutEnable( 
-            /* [retval][out] */ LONG *pVal) = 0;
-        
-        virtual /* [id][propput] */ HRESULT STDMETHODCALLTYPE put_cmdOutEnable( 
-            /* [in] */ LONG newVal) = 0;
-        
     };
     
     
@@ -302,14 +296,6 @@ EXTERN_C const IID IID_IUSB;
             /* [in] */ LONG len,
             /* [retval][out] */ SAFEARRAY * *pRetVal);
         
-        /* [id][propget] */ HRESULT ( STDMETHODCALLTYPE *get_cmdOutEnable )( 
-            IUSB * This,
-            /* [retval][out] */ LONG *pVal);
-        
-        /* [id][propput] */ HRESULT ( STDMETHODCALLTYPE *put_cmdOutEnable )( 
-            IUSB * This,
-            /* [in] */ LONG newVal);
-        
         END_INTERFACE
     } IUSBVtbl;
 
@@ -402,12 +388,6 @@ EXTERN_C const IID IID_IUSB;
 
 #define IUSB_ReadDoubleSync(This,len,pRetVal)	\
     ( (This)->lpVtbl -> ReadDoubleSync(This,len,pRetVal) ) 
-
-#define IUSB_get_cmdOutEnable(This,pVal)	\
-    ( (This)->lpVtbl -> get_cmdOutEnable(This,pVal) ) 
-
-#define IUSB_put_cmdOutEnable(This,newVal)	\
-    ( (This)->lpVtbl -> put_cmdOutEnable(This,newVal) ) 
 
 #endif /* COBJMACROS */
 

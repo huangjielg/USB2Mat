@@ -252,18 +252,18 @@ STDMETHODIMP CUSB::put_outFormat(BSTR newVal)
 
 
 
-STDMETHODIMP CUSB::get_cmdOutEnable(
-    /* [retval][out] */ LONG* pVal)
-{
-    *pVal = m_pDlg->m_bCmdOutEnable;
-    return S_OK;
-}
-
-STDMETHODIMP CUSB::put_cmdOutEnable(
-    /* [in] */ LONG newVal)
-{
-    m_pDlg->m_bCmdOutEnable = newVal;
-    return S_OK;
-}
+//STDMETHODIMP CUSB::get_cmdOutEnable(
+//    /* [retval][out] */ LONG* pVal)
+//{
+//    *pVal = m_pDlg->m_bCmdOutEnable;
+//    return S_OK;
+//}
+//
+//STDMETHODIMP CUSB::put_cmdOutEnable(
+//    /* [in] */ LONG newVal)
+//{
+//    m_pDlg->m_bCmdOutEnable = newVal;
+//    return S_OK;
+//}
 
 
